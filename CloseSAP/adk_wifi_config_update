@@ -1,0 +1,188 @@
+#!/bin/sh
+#
+# Copyright (c) 2018, The Linux Foundation. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of The Linux Foundation nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# Location of wifi conf files
+wifi_hostapd_conf="/etc/misc/wifi/hostapd.conf"
+wifi_sta_mode_hostapd_conf="/etc/misc/wifi/sta_mode_hostapd.conf"
+wifi_wpa_supplicant_conf="/etc/misc/wifi/wpa_supplicant.conf"
+
+#Location of backed-up original conf files
+data_hostapd_conf_orig="/data/hostapd_orig.conf"
+data_sta_mode_hostapd_conf_orig="/data/sta_mode_hostapd_orig.conf"
+
+#Location of tmp conf files for modifications by ADK
+tmp_data_hostapd_conf="/tmp/hostapd_temp.conf"
+tmp_sta_mode_hostapd_conf="/tmp/sta_mode_hostapd_temp.conf"
+
+#Location of backed-up wpa_supplicant conf files
+data_home_wpa_supplicant_conf="/data/wpa_supplicant_home.conf"
+data_mlan_wpa_supplicant_conf="/data/wpa_supplicant_mlan.conf"
+
+
+# Backup original hostapd.conf from /etc/misc/wifi file into /data folder
+# This is only done during the very first boot
+backup_orig_hostapd_conf() {
+	[ ! -f $data_hostapd_conf_orig ] && cp $wifi_hostapd_conf $data_hostapd_conf_orig
+}
+
+# Copy the original hostapd.conf file into /data folder for modification
+create_temp_hostapd_conf() {
+	cp $data_hostapd_conf_orig $tmp_data_hostapd_conf
+}
+
+# Copy the modified hostapd.conf into /etc/wifi/misc folder after modification
+commit_hostapd_conf() {
+	cmp -s $tmp_data_hostapd_conf $wifi_hostapd_conf || cp $tmp_data_hostapd_conf $wifi_hostapd_conf
+}
+
+# Backup original sta_mode_hostapd.conf file into /data folder
+# This is only done during the very first boot
+backup_orig_sta_mode_hostapd_conf() {
+	[ ! -f $data_sta_mode_hostapd_conf_orig ] && cp $wifi_sta_mode_hostapd_conf $data_sta_mode_hostapd_conf_orig
+}
+
+# Copy the original sta_mode_hostapd.conf file  into /data folder for modification
+create_temp_sta_mode_hostapd_conf() {
+	cp $data_sta_mode_hostapd_conf_orig $tmp_sta_mode_hostapd_conf
+}
+
+# Copy the modified sta_mode_hostapd.conf into /etc/wifi/misc folder after modification
+commit_sta_mode_hostapd_conf() {
+	cmp -s $tmp_sta_mode_hostapd_conf $wifi_sta_mode_hostapd_conf || cp $tmp_sta_mode_hostapd_conf $wifi_sta_mode_hostapd_conf
+}
+
+# Backup current wpa_supplicant.conf (when connected to home-AP) file into /data folder
+backup_home_wpa_supplicant_conf() {
+#	cmp -s $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf || cp $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf
+}
+
+# Restore home-AP wpa_supplicant.conf as the current wpa_supplicant.conf file
+restore_home_wpa_supplicant_conf() {
+#	cmp -s $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf || cp $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf
+}
+
+# Backup current wpa_supplicant.conf (when connected to MLAN AP) file into /data folder
+backup_mlan_wpa_supplicant_conf() {
+	cmp -s $wifi_wpa_supplicant_conf $data_mlan_wpa_supplicant_conf || cp $wifi_wpa_supplicant_conf $data_mlan_wpa_supplicant_conf
+}
+
+# Restore MLAN wpa_supplicant.conf as the current wpa_supplicant.conf file
+restore_mlan_wpa_supplicant_conf() {
+	cmp -s $data_mlan_wpa_supplicant_conf $wifi_wpa_supplicant_conf || cp $data_mlan_wpa_supplicant_conf $wifi_wpa_supplicant_conf
+}
+
+convPassphraseToPsk() {
+        local ssid="$1"
+        local passphrase="$2"
+
+        wpa_passphrase "$ssid" "$passphrase" | grep '^\s*psk=' | sed 's/^\s*psk=//'
+}
+
+configure_param() {
+        local param="$1"
+        local value="$2"
+        local file="$3"
+
+        #Replace the value of the input param with the input value
+
+        #If the line starts with the param
+       	sed -i "s/^$param=.*/$param=$value/" "$file"
+        #If the the param is commented out
+       	sed -i "s/^#$param=.*/$param=$value/" "$file"
+        #TO-DO: we should combine the above two seds
+}
+
+configure_ap_ssid() {
+        local ssid="$1"
+        local file="$2"
+        local param
+
+        # Name of the entry for hostapd vs wpa_supplicant
+        [ -z "$file" ] && param=ssid2 || param=ssid
+
+        configure_param "$param" "$ssid" "$file"
+
+        # Disable password
+        sed -i "s/^wpa=/#wpa=/" "$file"
+}
+
+configure_ap_ssid_and_password() {
+
+        local ssid="$1"
+        local password="$2"
+        local file="$3"
+
+        configure_ap_ssid "$ssid" "$file"
+
+        configure_param "wpa_passphrase" "$2" "$file"
+
+        # Enable security
+        sed -i "s/^#wpa=/wpa=/" "$file"
+}
+
+# Backup, modify and restore hostapd.conf
+if [ "$1" = "backup_orig_hostapd_conf" ]; then
+	backup_orig_hostapd_conf
+elif [ "$1" = "create_temp_hostapd_conf" ]; then
+	create_temp_hostapd_conf
+elif [ "$1" = "ssid_hostapd_conf" ]; then
+	configure_ap_ssid $2 $tmp_data_hostapd_conf
+elif [ "$1" = "ssid_and_password_hostapd_conf" ]; then
+	configure_ap_ssid_and_password $2 $3 $tmp_data_hostapd_conf
+elif [ "$1" = "param_hostapd_conf" ]; then
+	configure_param $2 $3 $tmp_data_hostapd_conf
+elif [ "$1" = "commit_hostapd_conf" ]; then
+	commit_hostapd_conf
+# Backup, modify and restore sta_mode_hostapd.conf
+elif [ "$1" = "backup_orig_sta_mode_hostapd_conf" ]; then
+	backup_orig_sta_mode_hostapd_conf
+elif [ "$1" = "create_temp_sta_mode_hostapd_conf" ]; then
+	create_temp_sta_mode_hostapd_conf
+elif [ "$1" = "ssid_sta_mode_hostapd_conf" ]; then
+	configure_ap_ssid $2 $tmp_sta_mode_hostapd_conf
+elif [ "$1" = "ssid_and_password_sta_mode_hostapd_conf" ]; then
+	configure_ap_ssid_and_password $2 $3 $tmp_sta_mode_hostapd_conf
+elif [ "$1" = "param_sta_mode_hostapd_conf" ]; then
+	configure_param $2 $3 $tmp_sta_mode_hostapd_conf
+elif [ "$1" = "commit_sta_mode_hostapd_conf" ]; then
+	commit_sta_mode_hostapd_conf
+# Backup, modify and restore wpa_supplicant.conf
+elif [ "$1" = "backup_home_wpa_supplicant_conf" ]; then
+	backup_home_wpa_supplicant_conf
+elif [ "$1" = "restore_home_wpa_supplicant_conf" ]; then
+	restore_home_wpa_supplicant_conf
+elif [ "$1" = "backup_mlan_wpa_supplicant_conf" ]; then
+	backup_mlan_wpa_supplicant_conf
+elif [ "$1" = "restore_mlan_wpa_supplicant_conf" ]; then
+	restore_mlan_wpa_supplicant_conf
+else
+	echo "wifi_config_update: not yet supported"
+fi
+
