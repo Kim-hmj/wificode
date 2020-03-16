@@ -949,20 +949,20 @@ bool WiFiControl::Private::PerformOnboarding() {
   ResetControlTimer();
 
   //  Set Onboard AP + STA configuration
-  if (UpdateOnboardAPConfig(true)) {
+  /* if (UpdateOnboardAPConfig(true)) {
     ADK_LOG_DEBUG("Wi-Fi-Control::Set Onboard AP config successful");
   } else {
     ADK_LOG_ERROR("Wi-Fi-Control::Set Onboard AP config fail");
     return false;
   }
-
+ */
   //  Set AP(Soft-AP)+STA mode
-  if (qcmap_control_->setWlanModeApSTA()) {
-    ADK_LOG_DEBUG("Wi-Fi-Control::Set Onboard-AP+STA mode successful");
-  } else {
-    ADK_LOG_ERROR("Wi-Fi-Control::Set Onboard-AP+STA mode failed");
-    return false;
-  }
+  // if (qcmap_control_->setWlanModeApSTA()) {
+    // ADK_LOG_DEBUG("Wi-Fi-Control::Set Onboard-AP+STA mode successful");
+  // } else {
+    // ADK_LOG_ERROR("Wi-Fi-Control::Set Onboard-AP+STA mode failed");
+    // return false;
+  // }
 
   //  Remove wpa_supplicant entries so that STA mode will not get
   //  connected when the device is going to be onboarded with another AP
@@ -971,7 +971,7 @@ bool WiFiControl::Private::PerformOnboarding() {
     return false;
   }
   // Reset the connected flag
-  sta_connected_ = false;
+   sta_connected_ = false;
 
   //  Wi-Fi modes changed, Activate Wi-Fi to get it effective
   if (!Activate()) {
@@ -997,7 +997,7 @@ void WiFiControl::Private::OnboardingCompleteTimeout() {
   // so send a complete onboarding complete message to self on timeout
   // to compete the onboarding process if the STA mode is still connected.
 
-  if (sta_connected_) {
+   if (sta_connected_) {
     ConnectivityCommand connectivity_command;
 
     connectivity_command.command = CONNECTIVITY_WIFI_COMPLETE_ONBOARDING;
@@ -1013,8 +1013,8 @@ void WiFiControl::Private::PerformWaitingForOnboardCompleteMessage() {
 
   //  Onboarding complete timeout - how long to wait for mobile-app/peer device
   //  to complete the onboarding process
-  connectivity_wifi_config_->Read(&timeout_sec,
-      adk::Connectivity::keys::wifi::kWiFiOnboardingCompleteTimeout);
+  // connectivity_wifi_config_->Read(&timeout_sec,
+      // adk::Connectivity::keys::wifi::kWiFiOnboardingCompleteTimeout);
 
   if (timeout_sec) {
     ADK_LOG_DEBUG("Wi-Fi-Control::Wait %d sec for onboard complete message",timeout_sec);
@@ -1023,7 +1023,7 @@ void WiFiControl::Private::PerformWaitingForOnboardCompleteMessage() {
                        std::chrono::seconds{timeout_sec});
 
   } else {
-    // No need to wait for onboard complete message, so invoke the timeout function now itself
+  //  No need to wait for onboard complete message, so invoke the timeout function now itself
     OnboardingCompleteTimeout();
   }
 }
@@ -1988,7 +1988,8 @@ void WiFiControl::Private::SendConnectStatus(const bool status,
     connected_msg->set_ssid(ssid);
     connected_msg->set_freq(GetStaConnectedFrequency());
     connected_msg->set_status("success");
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2037,7 +2038,8 @@ void WiFiControl::Private::SendMlanStartOnboardingStatus(
   if (status) {
     connected_msg->set_ssid(ssid);
     connected_msg->set_status("success");
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2065,7 +2067,8 @@ void WiFiControl::Private::SendMlanStopOnboardingStatus(const bool status) {
 
   if (status) {
     connected_msg->set_status("success");
-  } else {
+  } 
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2096,7 +2099,8 @@ void WiFiControl::Private::SendMlanStartLeadStatus(
     connected_msg->set_status("success");
     connected_msg->set_ssid(mlan_ap_ssid);
     connected_msg->set_password(mlan_ap_password);
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2121,7 +2125,8 @@ void WiFiControl::Private::SendMlanStopStatus(const bool status) {
 
   if (status) {
     connected_msg->set_status("success");
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2151,7 +2156,8 @@ void WiFiControl::Private::SendMlanAPGetCredentialsStatus(
     connected_msg->set_status("success");
     connected_msg->set_ssid(mlan_ap_ssid);
     connected_msg->set_password(mlan_ap_password);
-  } else {
+  } 
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2180,7 +2186,8 @@ void WiFiControl::Private::SendMlanStartSlaveStatus(
   if (status) {
     connected_msg->set_status("success");
     connected_msg->set_ssid(ssid);
-  } else {
+  } 
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2206,7 +2213,8 @@ void WiFiControl::Private::SendOnboardingStatus(const bool status) {
 
   if (status) {
     connected_msg->set_status("success");
-  } else {
+  } 
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2232,7 +2240,8 @@ void WiFiControl::Private::SendOnboardStatus(const bool status, const std::strin
   if (status) {
     connected_msg->set_status("success");
     connected_msg->set_ssid(ssid);
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2281,7 +2290,8 @@ void WiFiControl::Private::SendDisableStatus(const bool status) {
 
   if (status) {
     connected_msg->set_status("success");
-  } else {
+  }
+  else {
     connected_msg->set_status("fail");
   }
 
@@ -2330,7 +2340,8 @@ void WiFiControl::Private::SendScanResults(
       scan_list->set_wpa(it->wpa);
     }
 
-  } else {
+  } 
+  else {
     connected_msg->set_status("fail");
   }
   ADK_LOG_DEBUG("Wi-Fi-Control::Sending Wi-Fi scan status  %d", status);
@@ -2681,6 +2692,7 @@ void WiFiControl::Private::StaConnectedIndWaitTimeout() {
   GetStaConnectionSSID(&ssid);
   SendConnectStatus(false, ssid);
 
+
   // Send the connection timedout event to the state machine
   state_machine_->ProcessEvent(adk::connectivity::nsm::kNSMWiFiConnectionTimedoutEventID);
 }
@@ -2820,18 +2832,18 @@ bool WiFiControl::Private::Activate() {
   //  TO-DO: qcmap_control_->activateWlan() is not taking the
   //  mode changes (AP ---> AP+STA ---> STA, etc.),
   //  so disable and enable WLAN for now!
-#if 0 // [TYM] Don't restart WiFi when connected as we don't need Soft-AP 
+
   // First disable Wi-Fi
   if (!qcmap_control_->enableWlan(false)) {
     ADK_LOG_ERROR("Wi-Fi-Control::Wi-Fi disable during Activate failed");
 
-    // Try disabling it once again
+   //Try disabling it once again
     if (!qcmap_control_->enableWlan(false)) {
       ADK_LOG_ERROR("Wi-Fi-Control::Wi-Fi re-disable during Activate failed");
       return false;
     }
   }
-#endif
+
   // Now enable Wi-Fi
   if (!qcmap_control_->enableWlan(true)) {
     ADK_LOG_ERROR("Wi-Fi-Control::Wi-Fi enable during Activate failed");
@@ -2845,7 +2857,8 @@ bool WiFiControl::Private::Activate() {
       return false;
     }
   }
-
+    SetEnableState(true);
+    SendEnableStatus(true);
   // Set Wi-Fi as enabled and send the message in ADK-IPC if Wi-Fi was disabled
   // by the user before
   bool wifi_enabled;

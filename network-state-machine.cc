@@ -913,16 +913,16 @@ struct NetworkStateMachineInternal: public msm::front::state_machine_def<Network
                msmf::none >,
 
      msmf::Row<WiFiOnboarding, WiFiConnectedEvent, msmf::none,
-               actionWiFiStartOnboardCompTimer,
+              actionWiFiStartOnboardCompTimer,
                msmf::none >,
 
      msmf::Row<WiFiOnboarding, WiFiCompleteOnboardingEvent, WiFiHomeSta,
-               msmf::ActionSequence_<mpl::vector<actionWiFiOnboarded, actionWiFiEnableInHomeStaMode>>,
-               euml::And_<euml::Not_<IsWiFiMlanLead>, IsWiFiStaConnected> >,
+               msmf::ActionSequence_<mpl::vector<actionWiFiOnboarded>>,
+              euml::And_<euml::Not_<IsWiFiMlanLead>,IsWiFiStaConnected> >,
 
      msmf::Row<WiFiOnboarding, WiFiCompleteOnboardingEvent, WiFiHomeSta_WiFiMlanAp,
                msmf::ActionSequence_<mpl::vector<actionWiFiOnboarded, actionWiFiEnableInHomeStaMlanApMode>>,
-               euml::And_<IsWiFiMlanLead, IsWiFiStaConnected>>,
+               euml::And_<IsWiFiMlanLead,IsWiFiStaConnected>>,
 
      msmf::Row<WiFiOnboarding, WiFiMlanStartSlaveEvent, WiFiMlanSta,
                actionWiFiMlanSlaveStart,
