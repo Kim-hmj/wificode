@@ -80,12 +80,12 @@ commit_sta_mode_hostapd_conf() {
 
 # Backup current wpa_supplicant.conf (when connected to home-AP) file into /data folder
 backup_home_wpa_supplicant_conf() {
-#	cmp -s $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf || cp $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf
+	cmp -s $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf || cp $wifi_wpa_supplicant_conf $data_home_wpa_supplicant_conf
 }
 
 # Restore home-AP wpa_supplicant.conf as the current wpa_supplicant.conf file
 restore_home_wpa_supplicant_conf() {
-#	cmp -s $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf || cp $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf
+	cmp -s $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf || cp $data_home_wpa_supplicant_conf $wifi_wpa_supplicant_conf
 }
 
 # Backup current wpa_supplicant.conf (when connected to MLAN AP) file into /data folder

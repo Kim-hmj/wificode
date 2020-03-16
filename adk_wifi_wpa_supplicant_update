@@ -88,5 +88,4 @@ fi
 
 # Now copy the temp file to the correct location
 cp /data/wpa_supplicant.conf.tmp "$file"
-rm /data/wpa_supplicant.conf.tmp
 
